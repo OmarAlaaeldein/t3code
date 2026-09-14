@@ -28,6 +28,7 @@ import {
   type WorkLogEntry,
 } from "../../session-logic";
 import { type ChatMessage, type ProposedPlan, type TurnDiffSummary } from "../../types";
+import type { QueuedComposerMessage } from "../../queuedMessageStore";
 import { type MessageId, type OrchestrationLatestTurn, type TurnId } from "@t3tools/contracts";
 import { formatWorkspaceRelativePath } from "../../filePathDisplay";
 
@@ -389,6 +390,14 @@ export type MessagesTimelineRow =
       kind: "thinking";
       id: string;
       createdAt: string | null;
+    }
+  | {
+      kind: "queued-message";
+      id: string;
+      createdAt: string;
+      queuedMessage: QueuedComposerMessage;
+      /** Oldest queued message, the one the next boundary sends. */
+      isNext: boolean;
     };
 
 export interface StableMessagesTimelineRowsState {
@@ -857,6 +866,8 @@ export function deriveMessagesTimelineRows(input: {
   supportsConversationRollback: boolean;
   /** Task ids of subagents still working, used by the active tool indicator. */
   liveAgentTaskIds?: ReadonlySet<string> | undefined;
+  /** Messages sent during the running turn, rendered after the live rows. */
+  queuedMessages?: ReadonlyArray<QueuedComposerMessage>;
 }): MessagesTimelineRow[] {
   const turnDiffSummaryByAssistantMessageId = new Map<MessageId, TurnDiffSummary>();
   for (const summary of input.turnDiffSummaries) {
@@ -1257,8 +1268,17 @@ export function deriveMessagesTimelineRows(input: {
       createdAt: input.activeTurnStartedAt,
     });
   }
-
-  return attachTrailingToolGroupsToAssistant(nextRows);
+  const rows = attachTrailingToolGroupsToAssistant(nextRows);
+  input.queuedMessages?.forEach((queuedMessage, index) => {
+    rows.push({
+      kind: "queued-message",
+      id: `queued-message:${queuedMessage.id}`,
+      createdAt: queuedMessage.createdAt,
+      queuedMessage,
+      isNext: index === 0,
+    });
+  });
+  return rows;
 }
 
 type MessagesTimelineRowsInput = Parameters<typeof deriveMessagesTimelineRows>[0];
@@ -1386,6 +1406,11 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
 
     case "proposed-plan":
       return a.proposedPlan === (b as typeof a).proposedPlan;
+
+    case "queued-message": {
+      const bq = b as typeof a;
+      return a.queuedMessage === bq.queuedMessage && a.isNext === bq.isNext;
+    }
 
     case "work": {
       const bw = b as typeof a;
