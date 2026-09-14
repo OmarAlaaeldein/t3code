@@ -23,6 +23,7 @@ import {
   readEnvironmentSupportsSettlement,
   readEnvironmentSupportsSnooze,
   readEnvironmentSupportsTitleRegeneration,
+  readThreadDetail,
   readThreadShell,
   useProjects,
 } from "../state/entities";
@@ -39,6 +40,8 @@ import { useCopyToClipboard } from "./useCopyToClipboard";
 import { useNewThreadHandler } from "./useHandleNewThread";
 import { useClientSettings } from "./useSettings";
 import { useThreadActions } from "./useThreadActions";
+import { formatThreadToMarkdown } from "../lib/threadExport";
+import { downloadPlanAsTextFile } from "../proposedPlan";
 
 function failureToast(title: string, error: unknown) {
   toastManager.add(
@@ -276,6 +279,36 @@ export function useThreadActionMenu(input: {
           case "copy-thread-id":
             copyThreadIdToClipboard(thread.id, { threadId: thread.id });
             return;
+          case "export-markdown": {
+            const threadDetail = readThreadDetail(threadRef) ?? thread;
+            const project = projects.find(
+              (candidate) =>
+                candidate.environmentId === thread.environmentId &&
+                candidate.id === thread.projectId,
+            );
+            const markdown = formatThreadToMarkdown(
+              {
+                id: thread.id,
+                title: thread.title,
+                createdAt: thread.createdAt,
+                modelSelection: thread.modelSelection,
+                messages: "messages" in threadDetail ? threadDetail.messages : [],
+              },
+              project?.title,
+            );
+            const safeTitle = (thread.title || "conversation")
+              .toLowerCase()
+              .replace(/[^a-z0-9_-]/g, "_");
+            downloadPlanAsTextFile(`${safeTitle}.md`, markdown);
+            toastManager.add(
+              stackedThreadToast({
+                type: "success",
+                title: "Conversation exported",
+                description: `Saved ${safeTitle}.md`,
+              }),
+            );
+            return;
+          }
           case "archive": {
             if (confirmThreadArchive) {
               const confirmed = await settlePromise(() =>
