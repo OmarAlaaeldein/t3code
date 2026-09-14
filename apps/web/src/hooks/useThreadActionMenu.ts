@@ -25,6 +25,7 @@ import {
   readEnvironmentSupportsTitleRegeneration,
   readThreadDetail,
   readThreadShell,
+  waitForThreadDetail,
   useProjects,
 } from "../state/entities";
 import { usePrimaryEnvironmentId } from "../state/environments";
@@ -280,7 +281,7 @@ export function useThreadActionMenu(input: {
             copyThreadIdToClipboard(thread.id, { threadId: thread.id });
             return;
           case "export-markdown": {
-            const threadDetail = readThreadDetail(threadRef) ?? thread;
+            const threadDetail = (await waitForThreadDetail(threadRef)) ?? thread;
             const project = projects.find(
               (candidate) =>
                 candidate.environmentId === thread.environmentId &&

@@ -124,11 +124,15 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useNowMinute } from "../hooks/useNowMinute";
 import { useEnvironments, usePrimaryEnvironmentId } from "../state/environments";
 import {
+  readProject,
   readThreadShell,
   useAllEnvironmentProjectSnapshotsReady,
   useProjects,
   useThreadShells,
+  waitForThreadDetail,
 } from "../state/entities";
+import { formatThreadToMarkdown } from "../lib/threadExport";
+import { downloadPlanAsTextFile } from "../proposedPlan";
 import { environmentServerConfigsAtom, primaryServerKeybindingsAtom } from "../state/server";
 import { vcsEnvironment } from "../state/vcs";
 import { threadEnvironment } from "../state/threads";
@@ -4120,6 +4124,32 @@ export default function Sidebar() {
           case "copy-thread-id":
             copyThreadIdToClipboard(thread.id, { threadId: thread.id });
             return;
+          case "export-markdown": {
+            const threadDetail = (await waitForThreadDetail(threadRef)) ?? thread;
+            const project = readProject(scopeProjectRef(thread.environmentId, thread.projectId));
+            const markdown = formatThreadToMarkdown(
+              {
+                id: thread.id,
+                title: thread.title,
+                createdAt: thread.createdAt,
+                modelSelection: thread.modelSelection,
+                messages: "messages" in threadDetail ? threadDetail.messages : [],
+              },
+              project?.title,
+            );
+            const safeTitle = (thread.title || "conversation")
+              .toLowerCase()
+              .replace(/[^a-z0-9_-]/g, "_");
+            downloadPlanAsTextFile(`${safeTitle}.md`, markdown);
+            toastManager.add(
+              stackedThreadToast({
+                type: "success",
+                title: "Conversation exported",
+                description: `Saved ${safeTitle}.md`,
+              }),
+            );
+            return;
+          }
           case "archive": {
             if (confirmThreadArchive) {
               const confirmed = await settlePromise(() =>
