@@ -12,7 +12,6 @@ import { appCommand } from "./cli/app.ts";
 import { connectCommand } from "./cli/connect.ts";
 import { pairCommand } from "./cli/pair.ts";
 import { hasCloudPublicConfig } from "./cloud/publicConfig.ts";
-import { sharedServerCommandFlags } from "./cli/config.ts";
 import { isEntrypoint } from "./entrypoint.ts";
 import { projectCommand } from "./cli/project.ts";
 import { runServerCommand, serveCommand, startCommand } from "./cli/server.ts";
@@ -20,6 +19,7 @@ import { serviceCommand } from "./cli/service.ts";
 import { servicePreflightCommand } from "./cli/servicePreflight.ts";
 import { themeCommand } from "./cli/theme.ts";
 import { triageCommand } from "./cli/triage.ts";
+import { runTuiCommand, tuiCommand, tuiFlags } from "./cli/tui.ts";
 
 const CliRuntimeLayer = Layer.mergeAll(NodeServices.layer, NetService.layer);
 
@@ -48,9 +48,9 @@ const connectUnavailableCommand = Command.make("connect", {
 );
 
 export const makeCli = ({ cloudEnabled = hasCloudPublicConfig } = {}) =>
-  Command.make("t3", { ...sharedServerCommandFlags }).pipe(
-    Command.withDescription("Run the T3 Code server."),
-    Command.withHandler((flags) => runServerCommand(flags)),
+  Command.make("t3", tuiFlags).pipe(
+    Command.withDescription("T3 Code interactive TUI harness."),
+    Command.withHandler((flags) => runTuiCommand(flags)),
     Command.withSubcommands([
       startCommand,
       serveCommand,
@@ -62,6 +62,7 @@ export const makeCli = ({ cloudEnabled = hasCloudPublicConfig } = {}) =>
       servicePreflightCommand,
       themeCommand,
       triageCommand,
+      tuiCommand,
       cloudEnabled ? connectCommand : connectUnavailableCommand,
     ]),
   );
