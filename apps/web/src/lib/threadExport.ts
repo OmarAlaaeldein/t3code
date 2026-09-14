@@ -1,5 +1,4 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import {
   requestOlderThreadTurns,
   threadHasOlderTurns,
@@ -100,10 +99,7 @@ function waitForNextOlderPage(ref: ScopedThreadRef, timeoutMs = 5000): Promise<v
   });
 }
 
-export async function exportThreadAsMarkdown(
-  threadRef: ScopedThreadRef,
-  _fallbackShell?: EnvironmentThreadShell | null,
-): Promise<boolean> {
+export async function exportThreadAsMarkdown(threadRef: ScopedThreadRef): Promise<boolean> {
   const detail = await waitForThreadDetail(threadRef);
   if (!detail) {
     toastManager.add(

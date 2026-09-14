@@ -23,9 +23,7 @@ import {
   readEnvironmentSupportsSettlement,
   readEnvironmentSupportsSnooze,
   readEnvironmentSupportsTitleRegeneration,
-  readThreadDetail,
   readThreadShell,
-  waitForThreadDetail,
   useProjects,
 } from "../state/entities";
 import { usePrimaryEnvironmentId } from "../state/environments";
@@ -280,7 +278,7 @@ export function useThreadActionMenu(input: {
             copyThreadIdToClipboard(thread.id, { threadId: thread.id });
             return;
           case "export-markdown":
-            await exportThreadAsMarkdown(threadRef, thread);
+            await exportThreadAsMarkdown(threadRef);
             return;
           case "archive": {
             if (confirmThreadArchive) {

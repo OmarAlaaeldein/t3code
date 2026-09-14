@@ -124,12 +124,10 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useNowMinute } from "../hooks/useNowMinute";
 import { useEnvironments, usePrimaryEnvironmentId } from "../state/environments";
 import {
-  readProject,
   readThreadShell,
   useAllEnvironmentProjectSnapshotsReady,
   useProjects,
   useThreadShells,
-  waitForThreadDetail,
 } from "../state/entities";
 import { exportThreadAsMarkdown } from "../lib/threadExport";
 import { environmentServerConfigsAtom, primaryServerKeybindingsAtom } from "../state/server";
@@ -4124,7 +4122,7 @@ export default function Sidebar() {
             copyThreadIdToClipboard(thread.id, { threadId: thread.id });
             return;
           case "export-markdown":
-            await exportThreadAsMarkdown(threadRef, thread);
+            await exportThreadAsMarkdown(threadRef);
             return;
           case "archive": {
             if (confirmThreadArchive) {
