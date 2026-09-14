@@ -43,4 +43,22 @@ describe("formatThreadToMarkdown", () => {
     expect(md).not.toContain("- **Project:**");
     expect(md).not.toContain("- **Model:**");
   });
+
+  it("includes partial export warning when isPartial is true", () => {
+    const md = formatThreadToMarkdown(
+      {
+        id: "thread-partial",
+        title: "Long Thread",
+        messages: [{ role: "user", text: "Latest message" }],
+      },
+      "T3 Code",
+      { isPartial: true },
+    );
+
+    expect(md).toContain("> [!WARNING]");
+    expect(md).toContain(
+      "**Partial Export**: This transcript contains the 1 most recent messages.",
+    );
+    expect(md).toContain("### 👤 User\n\nLatest message");
+  });
 });
